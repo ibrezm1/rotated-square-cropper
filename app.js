@@ -22,8 +22,8 @@ const state = {
   angle: 0, // in radians
   
   // Configurations
-  aspectRatio: '1:1', // '1:1', 'free', '16:9', '4:3', '3:2', '2:3'
-  lockAspect: true,
+  aspectRatio: 'free', // '1:1', 'free', '16:9', '4:3', '3:2', '2:3'
+  lockAspect: false,
   bgFill: 'transparent', // 'transparent', 'blur', 'black', 'white'
   exportRes: '1024', // 'original', '512', '1024', '2048', 'custom'
   exportFormat: 'image/png', // 'image/png', 'image/jpeg', 'image/webp'
@@ -54,6 +54,8 @@ const DOM = {
   btnRedo: document.getElementById('btnRedo'),
   btnSample: document.getElementById('btnSample'),
   btnDownload: document.getElementById('btnDownload'),
+  btnCopy: document.getElementById('btnCopy'),
+  toastContainer: document.getElementById('toastContainer'),
   
   // Fine Tuning Fields
   posXInput: document.getElementById('posXInput'),
@@ -253,6 +255,10 @@ function initEventListeners() {
   });
   
   DOM.btnDownload.addEventListener('click', downloadCrop);
+  DOM.btnCopy.addEventListener('click', copyToClipboard);
+  
+  // Global Clipboard Paste handler
+  document.addEventListener('paste', handleClipboardPaste);
   
   // Undo / Redo Click actions
   DOM.btnUndo.addEventListener('click', undo);
@@ -446,8 +452,9 @@ function setupWorkspaceImage(img) {
   DOM.uploadPlaceholder.style.display = 'none';
   DOM.workspaceWrapper.style.display = 'flex';
   
-  // Enable download button
+  // Enable download & copy buttons
   DOM.btnDownload.disabled = false;
+  DOM.btnCopy.disabled = false;
   
   // Reset crop configuration & scale
   recalculateDisplayScale();
@@ -1112,4 +1119,99 @@ function applyHistoryState(historyItem) {
 function updateHistoryButtons() {
   DOM.btnUndo.disabled = (historyIndex <= 0);
   DOM.btnRedo.disabled = (historyIndex >= historyStack.length - 1);
+}
+
+// 10. CLIPBOARD INTERACTIONS & TOAST SYSTEM
+function handleClipboardPaste(e) {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  let foundImage = false;
+  
+  for (const item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      const blob = item.getAsFile();
+      loadImageFromFile(blob);
+      foundImage = true;
+      showToast('Image pasted from clipboard!');
+      break;
+    }
+  }
+  
+  if (!foundImage && e.clipboardData.types.includes('text/plain')) {
+    // If user pasted something else, don't show error, just let browser default
+  }
+}
+
+function copyToClipboard() {
+  if (!state.image) return;
+  
+  const exportCanvas = document.createElement('canvas');
+  let destWidth, destHeight;
+  const ratio = state.width / state.height;
+  
+  if (state.exportRes === 'original') {
+    destWidth = state.width;
+    destHeight = state.height;
+  } else if (state.exportRes === 'custom') {
+    destWidth = state.exportCustomWidth;
+    destHeight = state.exportCustomHeight;
+  } else {
+    destWidth = parseInt(state.exportRes);
+    destHeight = Math.round(destWidth / ratio);
+  }
+  
+  // Render cropped image
+  drawCroppedArea(exportCanvas, destWidth, destHeight);
+  
+  // Copy to system clipboard as a PNG blob
+  exportCanvas.toBlob((blob) => {
+    if (!blob) {
+      showToast('Error generating crop blob', true);
+      return;
+    }
+    
+    // Write image to clipboard
+    const data = [new ClipboardItem({ [blob.type]: blob })];
+    
+    navigator.clipboard.write(data)
+      .then(() => {
+        showToast('✓ Cropped image copied to clipboard!');
+        
+        // Temporarily animate copy button to indicate success
+        const prevContent = DOM.btnCopy.innerHTML;
+        DOM.btnCopy.classList.add('btn-primary');
+        DOM.btnCopy.classList.remove('btn-secondary');
+        DOM.btnCopy.innerHTML = `✓ Copied`;
+        setTimeout(() => {
+          DOM.btnCopy.classList.remove('btn-primary');
+          DOM.btnCopy.classList.add('btn-secondary');
+          DOM.btnCopy.innerHTML = prevContent;
+        }, 1500);
+      })
+      .catch((err) => {
+        console.error('Failed to copy to clipboard: ', err);
+        showToast('Clipboard copy failed. Ensure permissions are granted.', true);
+      });
+  }, 'image/png');
+}
+
+// Show premium glassmorphic toast notification
+function showToast(message, isError = false) {
+  if (!DOM.toastContainer) return;
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  if (isError) toast.className += ' toast-error';
+  
+  // Inline SVG icons for toast
+  const iconHtml = isError 
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
+    
+  toast.innerHTML = `${iconHtml} <span>${message}</span>`;
+  DOM.toastContainer.appendChild(toast);
+  
+  // Auto remove from DOM after animation completes (3 seconds)
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
 }

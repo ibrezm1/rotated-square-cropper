@@ -48,8 +48,8 @@
             <div class="upload-icon-container">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             </div>
-            <h3>Drag & Drop Image</h3>
-            <p>Supports PNG, JPG, WebP (or click to browse)</p>
+            <h3>Drag & Drop or Paste Image</h3>
+            <p>Supports PNG, JPG, WebP (or paste directly via Ctrl+V / Cmd+V)</p>
             <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Choose File</button>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
           </div>
@@ -109,8 +109,8 @@
           <div class="control-section">
             <label class="section-title">Aspect Ratio</label>
             <div class="aspect-grid">
-              <button class="btn-aspect active" data-ratio="1:1">Square 1:1</button>
-              <button class="btn-aspect" data-ratio="free">Free</button>
+              <button class="btn-aspect" data-ratio="1:1">Square 1:1</button>
+              <button class="btn-aspect active" data-ratio="free">Free</button>
               <button class="btn-aspect" data-ratio="16:9">16:9</button>
               <button class="btn-aspect" data-ratio="4:3">4:3</button>
               <button class="btn-aspect" data-ratio="3:2">3:2</button>
@@ -120,7 +120,7 @@
             <div class="aspect-lock-container">
               <label class="switch-label" for="lockAspect">
                 <span class="switch-text">Lock Aspect Ratio</span>
-                <input type="checkbox" id="lockAspect" checked>
+                <input type="checkbox" id="lockAspect">
                 <span class="switch-slider"></span>
               </label>
             </div>
@@ -231,11 +231,15 @@
             </div>
           </div>
 
-          <!-- Download Action -->
-          <div class="sidebar-action">
-            <button id="btnDownload" class="btn btn-primary btn-large btn-full" disabled>
+          <!-- Download & Copy Actions -->
+          <div class="sidebar-action" style="display: flex; gap: 0.75rem;">
+            <button id="btnCopy" class="btn btn-secondary btn-large" style="flex: 1;" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              Copy
+            </button>
+            <button id="btnDownload" class="btn btn-primary btn-large" style="flex: 1;" disabled>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Download Cropped Image
+              Download
             </button>
           </div>
         </div>
@@ -304,6 +308,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="app.js"></script>
 </body>
