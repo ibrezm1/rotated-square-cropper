@@ -58,6 +58,10 @@ const DOM = {
   toastContainer: document.getElementById('toastContainer'),
   btnPasteHeader: document.getElementById('btnPasteHeader'),
   btnPastePlaceholder: document.getElementById('btnPastePlaceholder'),
+  btnSavePreset: document.getElementById('btnSavePreset'),
+  btnApplyPreset: document.getElementById('btnApplyPreset'),
+  presetLabel: document.getElementById('presetLabel'),
+  btnDeletePreset: document.getElementById('btnDeletePreset'),
   
   // Fine Tuning Fields
   posXInput: document.getElementById('posXInput'),
@@ -111,6 +115,7 @@ const MIN_SIZE = 20; // min crop box dimension in pixels
 // Setup Application
 window.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
+  loadSavedPresetUI();
   
   // Load standard demo pattern on startup
   loadDemoPattern();
@@ -262,6 +267,11 @@ function initEventListeners() {
   // Programmatic Paste buttons
   DOM.btnPasteHeader.addEventListener('click', readImageFromClipboard);
   DOM.btnPastePlaceholder.addEventListener('click', readImageFromClipboard);
+  
+  // Custom Presets event handlers
+  DOM.btnSavePreset.addEventListener('click', saveCustomPreset);
+  DOM.btnApplyPreset.addEventListener('click', applyCustomPreset);
+  DOM.btnDeletePreset.addEventListener('click', deleteCustomPreset);
   
   // Global Clipboard Paste handler
   document.addEventListener('paste', handleClipboardPaste);
@@ -513,20 +523,45 @@ function resetCropBox() {
   state.cy = state.imageHeight / 2;
   state.angle = 0;
   
-  // Initial size: 60% of the smallest dimension
-  const side = Math.min(state.imageWidth, state.imageHeight) * 0.6;
+  const wStr = localStorage.getItem('spincrop_preset_w');
+  const hStr = localStorage.getItem('spincrop_preset_h');
   
-  if (state.aspectRatio === 'free') {
-    state.width = side;
-    state.height = side;
+  if (wStr && hStr) {
+    // Automatically apply saved custom preset scaled to fit the image
+    let targetW = parseInt(wStr);
+    let targetH = parseInt(hStr);
+    
+    const scaleFactor = Math.min(
+      (state.imageWidth * 0.95) / targetW,
+      (state.imageHeight * 0.95) / targetH,
+      1.0
+    );
+    
+    state.width = Math.max(MIN_SIZE, targetW * scaleFactor);
+    state.height = Math.max(MIN_SIZE, targetH * scaleFactor);
+    
+    state.lockAspect = true;
+    DOM.lockAspectCheckbox.checked = true;
+    state.aspectRatio = `${targetW}:${targetH}`;
+    
+    // Deselect predefined aspect ratio buttons
+    DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
   } else {
-    const ratio = getAspectNumerical();
-    if (ratio >= 1) {
+    // No custom preset exists, fall back to standard defaults
+    const side = Math.min(state.imageWidth, state.imageHeight) * 0.6;
+    
+    if (state.aspectRatio === 'free') {
       state.width = side;
-      state.height = side / ratio;
-    } else {
       state.height = side;
-      state.width = side * ratio;
+    } else {
+      const ratio = getAspectNumerical();
+      if (ratio >= 1) {
+        state.width = side;
+        state.height = side / ratio;
+      } else {
+        state.height = side;
+        state.width = side * ratio;
+      }
     }
   }
   
@@ -1248,4 +1283,81 @@ function showToast(message, isError = false) {
   setTimeout(() => {
     toast.remove();
   }, 3000);
+}
+
+// 11. CUSTOM PRESET MANAGEMENT
+function saveCustomPreset() {
+  if (!state.image) {
+    showToast('Load an image first to save a preset!', true);
+    return;
+  }
+  
+  const w = Math.round(state.width);
+  const h = Math.round(state.height);
+  
+  localStorage.setItem('spincrop_preset_w', w);
+  localStorage.setItem('spincrop_preset_h', h);
+  
+  loadSavedPresetUI();
+  showToast(`Preset size saved: ${w} × ${h} px`);
+}
+
+function applyCustomPreset() {
+  const wStr = localStorage.getItem('spincrop_preset_w');
+  const hStr = localStorage.getItem('spincrop_preset_h');
+  
+  if (!wStr || !hStr) return;
+  
+  let targetW = parseInt(wStr);
+  let targetH = parseInt(hStr);
+  
+  // Scale down to fit inside the loaded image if the preset exceeds it
+  const scaleFactor = Math.min(
+    (state.imageWidth * 0.95) / targetW,
+    (state.imageHeight * 0.95) / targetH,
+    1.0
+  );
+  
+  state.width = Math.max(MIN_SIZE, targetW * scaleFactor);
+  state.height = Math.max(MIN_SIZE, targetH * scaleFactor);
+  
+  // Center in screen space
+  state.cx = state.imageWidth / 2;
+  state.cy = state.imageHeight / 2;
+  
+  // Enable locked ratio matching this custom shape
+  state.lockAspect = true;
+  DOM.lockAspectCheckbox.checked = true;
+  state.aspectRatio = `${targetW}:${targetH}`;
+  
+  // Deselect predefined aspect ratio buttons
+  DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
+  
+  updateUIFromState(true);
+  renderPreview();
+  saveHistoryState();
+  showToast('Custom size preset applied!');
+}
+
+function deleteCustomPreset(e) {
+  // Prevent click event bubbling to parent apply button
+  e.stopPropagation();
+  
+  localStorage.removeItem('spincrop_preset_w');
+  localStorage.removeItem('spincrop_preset_h');
+  
+  loadSavedPresetUI();
+  showToast('Custom preset deleted.');
+}
+
+function loadSavedPresetUI() {
+  const w = localStorage.getItem('spincrop_preset_w');
+  const h = localStorage.getItem('spincrop_preset_h');
+  
+  if (w && h) {
+    DOM.presetLabel.textContent = `Custom Preset: ${w} × ${h} px`;
+    DOM.btnApplyPreset.style.display = 'flex';
+  } else {
+    DOM.btnApplyPreset.style.display = 'none';
+  }
 }
