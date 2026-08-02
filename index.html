@@ -32,6 +32,10 @@
         <button id="btnRedo" class="btn btn-icon" title="Redo (Ctrl+Y)" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-15 9 9 0 0 1 6 2.3l3 6.7"></path></svg>
         </button>
+        <button id="btnPasteHeader" class="btn btn-secondary" title="Read image from clipboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          Paste Image
+        </button>
         <button id="btnSample" class="btn btn-secondary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
           Load Demo Image
@@ -50,7 +54,13 @@
             </div>
             <h3>Drag & Drop or Paste Image</h3>
             <p>Supports PNG, JPG, WebP (or paste directly via Ctrl+V / Cmd+V)</p>
-            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+              <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Choose File</button>
+              <button id="btnPastePlaceholder" class="btn btn-secondary" title="Read image from clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                Paste Clipboard Image
+              </button>
+            </div>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
           </div>
 

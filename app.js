@@ -56,6 +56,8 @@ const DOM = {
   btnDownload: document.getElementById('btnDownload'),
   btnCopy: document.getElementById('btnCopy'),
   toastContainer: document.getElementById('toastContainer'),
+  btnPasteHeader: document.getElementById('btnPasteHeader'),
+  btnPastePlaceholder: document.getElementById('btnPastePlaceholder'),
   
   // Fine Tuning Fields
   posXInput: document.getElementById('posXInput'),
@@ -256,6 +258,10 @@ function initEventListeners() {
   
   DOM.btnDownload.addEventListener('click', downloadCrop);
   DOM.btnCopy.addEventListener('click', copyToClipboard);
+  
+  // Programmatic Paste buttons
+  DOM.btnPasteHeader.addEventListener('click', readImageFromClipboard);
+  DOM.btnPastePlaceholder.addEventListener('click', readImageFromClipboard);
   
   // Global Clipboard Paste handler
   document.addEventListener('paste', handleClipboardPaste);
@@ -1122,6 +1128,34 @@ function updateHistoryButtons() {
 }
 
 // 10. CLIPBOARD INTERACTIONS & TOAST SYSTEM
+async function readImageFromClipboard() {
+  try {
+    // Request permission and read clipboard contents
+    const clipboardItems = await navigator.clipboard.read();
+    let foundImage = false;
+    
+    for (const item of clipboardItems) {
+      for (const type of item.types) {
+        if (type.startsWith('image/')) {
+          const blob = await item.getType(type);
+          loadImageFromFile(blob);
+          foundImage = true;
+          showToast('Image loaded from clipboard!');
+          break;
+        }
+      }
+      if (foundImage) break;
+    }
+    
+    if (!foundImage) {
+      showToast('No image found in clipboard! Copy an image first.', true);
+    }
+  } catch (err) {
+    console.error('Clipboard read failed: ', err);
+    showToast('Failed to read clipboard. Please allow permission.', true);
+  }
+}
+
 function handleClipboardPaste(e) {
   const items = (e.clipboardData || e.originalEvent.clipboardData).items;
   let foundImage = false;
