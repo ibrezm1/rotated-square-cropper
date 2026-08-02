@@ -261,17 +261,17 @@ function initEventListeners() {
     state.exportFormat = e.target.value;
   });
   
-  DOM.btnDownload.addEventListener('click', downloadCrop);
-  DOM.btnCopy.addEventListener('click', copyToClipboard);
+  if (DOM.btnDownload) DOM.btnDownload.addEventListener('click', downloadCrop);
+  if (DOM.btnCopy) DOM.btnCopy.addEventListener('click', copyToClipboard);
   
   // Programmatic Paste buttons
-  DOM.btnPasteHeader.addEventListener('click', readImageFromClipboard);
-  DOM.btnPastePlaceholder.addEventListener('click', readImageFromClipboard);
+  if (DOM.btnPasteHeader) DOM.btnPasteHeader.addEventListener('click', readImageFromClipboard);
+  if (DOM.btnPastePlaceholder) DOM.btnPastePlaceholder.addEventListener('click', readImageFromClipboard);
   
   // Custom Presets event handlers
-  DOM.btnSavePreset.addEventListener('click', saveCustomPreset);
-  DOM.btnApplyPreset.addEventListener('click', applyCustomPreset);
-  DOM.btnDeletePreset.addEventListener('click', deleteCustomPreset);
+  if (DOM.btnSavePreset) DOM.btnSavePreset.addEventListener('click', saveCustomPreset);
+  if (DOM.btnApplyPreset) DOM.btnApplyPreset.addEventListener('click', applyCustomPreset);
+  if (DOM.btnDeletePreset) DOM.btnDeletePreset.addEventListener('click', deleteCustomPreset);
   
   // Global Clipboard Paste handler
   document.addEventListener('paste', handleClipboardPaste);
@@ -469,8 +469,8 @@ function setupWorkspaceImage(img) {
   DOM.workspaceWrapper.style.display = 'flex';
   
   // Enable download & copy buttons
-  DOM.btnDownload.disabled = false;
-  DOM.btnCopy.disabled = false;
+  if (DOM.btnDownload) DOM.btnDownload.disabled = false;
+  if (DOM.btnCopy) DOM.btnCopy.disabled = false;
   
   // Reset crop configuration & scale
   recalculateDisplayScale();
@@ -550,11 +550,11 @@ function resetCropBox() {
     state.cy = Math.max(0, Math.min(state.imageHeight, state.cy));
     
     state.lockAspect = true;
-    DOM.lockAspectCheckbox.checked = true;
+    if (DOM.lockAspectCheckbox) DOM.lockAspectCheckbox.checked = true;
     state.aspectRatio = `${targetW}:${targetH}`;
     
     // Deselect predefined aspect ratio buttons
-    DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
+    if (DOM.aspectButtons) DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
   } else {
     // No custom preset exists, fall back to standard defaults
     state.cx = state.imageWidth / 2;
@@ -579,9 +579,9 @@ function resetCropBox() {
   }
   
   const deg = state.angle * (180 / Math.PI);
-  DOM.angleSlider.value = deg;
-  DOM.angleInput.value = Math.round(deg * 10) / 10;
-  DOM.angleValue.textContent = deg.toFixed(1);
+  if (DOM.angleSlider) DOM.angleSlider.value = deg;
+  if (DOM.angleInput) DOM.angleInput.value = Math.round(deg * 10) / 10;
+  if (DOM.angleValue) DOM.angleValue.textContent = deg.toFixed(1);
   
   updateUIFromState(true);
   renderPreview();
@@ -1356,17 +1356,17 @@ function applyCustomPreset() {
   
   // Enable locked ratio matching this custom shape
   state.lockAspect = true;
-  DOM.lockAspectCheckbox.checked = true;
+  if (DOM.lockAspectCheckbox) DOM.lockAspectCheckbox.checked = true;
   state.aspectRatio = `${targetW}:${targetH}`;
   
   // Deselect predefined aspect ratio buttons
-  DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
+  if (DOM.aspectButtons) DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
   
   // Sync angle UI controls
   const deg = state.angle * (180 / Math.PI);
-  DOM.angleSlider.value = deg;
-  DOM.angleInput.value = Math.round(deg * 10) / 10;
-  DOM.angleValue.textContent = deg.toFixed(1);
+  if (DOM.angleSlider) DOM.angleSlider.value = deg;
+  if (DOM.angleInput) DOM.angleInput.value = Math.round(deg * 10) / 10;
+  if (DOM.angleValue) DOM.angleValue.textContent = deg.toFixed(1);
   
   updateUIFromState(true);
   renderPreview();
@@ -1393,9 +1393,9 @@ function loadSavedPresetUI() {
   const h = localStorage.getItem('spincrop_preset_h');
   
   if (w && h) {
-    DOM.presetLabel.textContent = `Custom Preset: ${w} × ${h} px`;
-    DOM.btnApplyPreset.style.display = 'flex';
+    if (DOM.presetLabel) DOM.presetLabel.textContent = `Custom Preset: ${w} × ${h} px`;
+    if (DOM.btnApplyPreset) DOM.btnApplyPreset.style.display = 'flex';
   } else {
-    DOM.btnApplyPreset.style.display = 'none';
+    if (DOM.btnApplyPreset) DOM.btnApplyPreset.style.display = 'none';
   }
 }
