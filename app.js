@@ -519,17 +519,19 @@ function recalculateDisplayScale() {
 function resetCropBox() {
   if (!state.image) return;
   
-  state.cx = state.imageWidth / 2;
-  state.cy = state.imageHeight / 2;
-  state.angle = 0;
-  
   const wStr = localStorage.getItem('spincrop_preset_w');
   const hStr = localStorage.getItem('spincrop_preset_h');
+  const rxStr = localStorage.getItem('spincrop_preset_rx');
+  const ryStr = localStorage.getItem('spincrop_preset_ry');
+  const angleStr = localStorage.getItem('spincrop_preset_angle');
   
   if (wStr && hStr) {
     // Automatically apply saved custom preset scaled to fit the image
     let targetW = parseInt(wStr);
     let targetH = parseInt(hStr);
+    let rx = parseFloat(rxStr !== null ? rxStr : 0.5);
+    let ry = parseFloat(ryStr !== null ? ryStr : 0.5);
+    let angle = parseFloat(angleStr !== null ? angleStr : 0);
     
     const scaleFactor = Math.min(
       (state.imageWidth * 0.95) / targetW,
@@ -539,6 +541,13 @@ function resetCropBox() {
     
     state.width = Math.max(MIN_SIZE, targetW * scaleFactor);
     state.height = Math.max(MIN_SIZE, targetH * scaleFactor);
+    state.angle = angle;
+    
+    // Apply saved center location
+    state.cx = rx * state.imageWidth;
+    state.cy = ry * state.imageHeight;
+    state.cx = Math.max(0, Math.min(state.imageWidth, state.cx));
+    state.cy = Math.max(0, Math.min(state.imageHeight, state.cy));
     
     state.lockAspect = true;
     DOM.lockAspectCheckbox.checked = true;
@@ -548,6 +557,10 @@ function resetCropBox() {
     DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
   } else {
     // No custom preset exists, fall back to standard defaults
+    state.cx = state.imageWidth / 2;
+    state.cy = state.imageHeight / 2;
+    state.angle = 0;
+    
     const side = Math.min(state.imageWidth, state.imageHeight) * 0.6;
     
     if (state.aspectRatio === 'free') {
@@ -565,9 +578,10 @@ function resetCropBox() {
     }
   }
   
-  DOM.angleSlider.value = 0;
-  DOM.angleInput.value = 0;
-  DOM.angleValue.textContent = '0';
+  const deg = state.angle * (180 / Math.PI);
+  DOM.angleSlider.value = deg;
+  DOM.angleInput.value = Math.round(deg * 10) / 10;
+  DOM.angleValue.textContent = deg.toFixed(1);
   
   updateUIFromState(true);
   renderPreview();
@@ -1294,22 +1308,34 @@ function saveCustomPreset() {
   
   const w = Math.round(state.width);
   const h = Math.round(state.height);
+  const rx = state.cx / state.imageWidth;
+  const ry = state.cy / state.imageHeight;
+  const angle = state.angle;
   
   localStorage.setItem('spincrop_preset_w', w);
   localStorage.setItem('spincrop_preset_h', h);
+  localStorage.setItem('spincrop_preset_rx', rx.toFixed(6));
+  localStorage.setItem('spincrop_preset_ry', ry.toFixed(6));
+  localStorage.setItem('spincrop_preset_angle', angle.toFixed(6));
   
   loadSavedPresetUI();
-  showToast(`Preset size saved: ${w} × ${h} px`);
+  showToast(`Preset saved: ${w} × ${h} px with location`);
 }
 
 function applyCustomPreset() {
   const wStr = localStorage.getItem('spincrop_preset_w');
   const hStr = localStorage.getItem('spincrop_preset_h');
+  const rxStr = localStorage.getItem('spincrop_preset_rx');
+  const ryStr = localStorage.getItem('spincrop_preset_ry');
+  const angleStr = localStorage.getItem('spincrop_preset_angle');
   
   if (!wStr || !hStr) return;
   
   let targetW = parseInt(wStr);
   let targetH = parseInt(hStr);
+  let rx = parseFloat(rxStr !== null ? rxStr : 0.5);
+  let ry = parseFloat(ryStr !== null ? ryStr : 0.5);
+  let angle = parseFloat(angleStr !== null ? angleStr : 0);
   
   // Scale down to fit inside the loaded image if the preset exceeds it
   const scaleFactor = Math.min(
@@ -1320,10 +1346,13 @@ function applyCustomPreset() {
   
   state.width = Math.max(MIN_SIZE, targetW * scaleFactor);
   state.height = Math.max(MIN_SIZE, targetH * scaleFactor);
+  state.angle = angle;
   
-  // Center in screen space
-  state.cx = state.imageWidth / 2;
-  state.cy = state.imageHeight / 2;
+  // Apply saved center location
+  state.cx = rx * state.imageWidth;
+  state.cy = ry * state.imageHeight;
+  state.cx = Math.max(0, Math.min(state.imageWidth, state.cx));
+  state.cy = Math.max(0, Math.min(state.imageHeight, state.cy));
   
   // Enable locked ratio matching this custom shape
   state.lockAspect = true;
@@ -1333,10 +1362,16 @@ function applyCustomPreset() {
   // Deselect predefined aspect ratio buttons
   DOM.aspectButtons.forEach(btn => btn.classList.remove('active'));
   
+  // Sync angle UI controls
+  const deg = state.angle * (180 / Math.PI);
+  DOM.angleSlider.value = deg;
+  DOM.angleInput.value = Math.round(deg * 10) / 10;
+  DOM.angleValue.textContent = deg.toFixed(1);
+  
   updateUIFromState(true);
   renderPreview();
   saveHistoryState();
-  showToast('Custom size preset applied!');
+  showToast('Custom preset applied!');
 }
 
 function deleteCustomPreset(e) {
@@ -1345,6 +1380,9 @@ function deleteCustomPreset(e) {
   
   localStorage.removeItem('spincrop_preset_w');
   localStorage.removeItem('spincrop_preset_h');
+  localStorage.removeItem('spincrop_preset_rx');
+  localStorage.removeItem('spincrop_preset_ry');
+  localStorage.removeItem('spincrop_preset_angle');
   
   loadSavedPresetUI();
   showToast('Custom preset deleted.');
